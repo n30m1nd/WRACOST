@@ -16,7 +16,7 @@ class WRACOST():
         self.arg_method = method
         self.arg_verbosity = verbosity
         self.arg_param = params
-        self.arg_args = args
+        self.arg_payload = args
 
         #   Useless if this class is used for any other programs    #
         self.lock = threading.Lock()
@@ -32,7 +32,6 @@ class WRACOST():
             connection = httplib.HTTPConnection(parsed_url.hostname, parsed_url.port)
             connection.request(method, parsed_url.path)
             #   End of critical fastness hyperspeed section #
-
             self.lock.acquire()
             sys.stdout.write("[+] Request sent ")
             if (arg_verbosity > 0):
@@ -59,18 +58,17 @@ class WRACOST():
         self.lock = lock
         self.do_request()
 
-
 if __name__ == '__main__':
     #   Set the command line arguments  #
     parser = arg_parser.ArgumentParser()
-    arg_url = parser.get_arg('url')
-    arg_nthreads = parser.get_arg('threads')
-    arg_verbosity = parser.get_arg('v')
-    arg_method = parser.get_arg('method')
-    arg_param = parser.get_arg('param')
-    arg_args = parser.get_arg('args')
+    arg_url = parser.args.url
+    arg_nthreads = parser.args.threads
+    arg_verbosity = parser.args.v
+    arg_method = parser.args.method
+    arg_param = parser.args.param
+    arg_payload = parser.args.payload
     #   End of setting the arguments    #
-    wracost = WRACOST(arg_url, arg_method, arg_verbosity, arg_param, arg_args)
+    wracost = WRACOST(arg_url, arg_method, arg_verbosity, arg_param, arg_payload)
 
     print('[+] Starting requests')
     #   Call arg_nthreads threads       #
