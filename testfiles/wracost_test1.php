@@ -1,10 +1,10 @@
 <?php
 
 if (!file_exists("blockage")){
-    file_put_contents(rand(),"Hello World. Testing!");
+    file_put_contents(rand(),"Testing");
 	$i = 1000;
 	while (--$i) echo $i; // Simulating big things happening in the server
-    file_put_contents("blockage", "blockedfuckit");
+    file_put_contents("blockage", "blocked");
 }else{
     echo "You dun goofed";
 }
