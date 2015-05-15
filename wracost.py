@@ -84,10 +84,3 @@ if __name__ == '__main__':
         t = threading.Thread(target=wracost.run, args=(lock,))
         threads.append(t)
         t.start()
-
-
-
-
-
-
-
