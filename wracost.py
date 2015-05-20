@@ -24,12 +24,12 @@ class WRACOST():
         #   Useless if this class is used by any other files than this  #
         self.lock = threading.Lock()
 
-    def parse_param_data(self):
+    def parse_param_data(self, params, payloads):
             data_payload = {}
-            if (self.arg_params and self.arg_payloads):
-                for n, param in enumerate(self.arg_params):
-                    if (len(self.arg_params) >= len(self.arg_payloads)):
-                        data_payload[param] = self.arg_payloads[n % len(self.arg_payloads)]
+            if (params and payloads):
+                for n, param in enumerate(params):
+                    if (len(params) >= len(payloads)):
+                        data_payload[param] = payloads[n % len(payloads)]
             return data_payload
 
     def do_request(self, method=None, url=None):
@@ -38,7 +38,7 @@ class WRACOST():
         if not (url):
             url = self.arg_url
         try:
-            parsed_payload = self.parse_param_data()
+            parsed_payload = self.parse_param_data(self.arg_params, self.arg_payloads)
             req_sent = ''
             #   POST or GET?    #
             #   We need to do as few things as we can here  #
@@ -48,8 +48,7 @@ class WRACOST():
             elif(method == 'GET'):
                 self.semaphore.acquire()
                 req_sent = requests.get(url)
-
-            #   End of critical fastness hyperspeed section #
+            #   End of critical section #
 
             self.lock.acquire()
             sys.stdout.write("[+]\tRequest sent ")
@@ -58,9 +57,10 @@ class WRACOST():
                 print "[+]\t\tmethod:", arg_method
                 if (self.arg_method!='GET'):
                     print "[+]\t\tpayload:", parsed_payload
-            #    print "[+]\tresponse headers: "
-            #    for thing, thong in response.getheaders():
-            #        print "[+]\t\t", thing,': ', thong
+                print "[+]\tresponse headers: "
+                for header_name in req_sent.headers:
+                    print "[+]\t\t", header_name, ':', req_sent.headers[header_name]
+                print
             self.lock.release()
 
         except httplib.HTTPException as ex:
@@ -79,6 +79,8 @@ class WRACOST():
         self.do_request()
 
 if __name__ == '__main__':
+    print 'WRACOST v1.0 ( www.github.com/n30m1nd )'
+
     #   Set the command line arguments  #
     parser = arg_parser.ArgumentParser()
     arg_url = parser.args.url
@@ -87,10 +89,10 @@ if __name__ == '__main__':
     arg_method = parser.args.method
     arg_param = parser.args.params
     arg_payload = parser.args.payloads
+#    arg_cookie = parser.args.cookie
     #   End of setting the arguments    #
 
     #   Init                            #
-    #   Need to add: Arg cookie         #
     wracost = WRACOST(arg_url, arg_method, arg_verbosity, arg_param, arg_payload)
 
     print('[+] Starting requests...')
@@ -98,6 +100,7 @@ if __name__ == '__main__':
     if (arg_verbosity > 0):
             print '[+]\t\tURL: ', arg_url
             print '[+]\t\tThreads: ', arg_nthreads
+            print
 
     threads = []
     semaphore = threading.Semaphore(0)
@@ -107,9 +110,7 @@ if __name__ == '__main__':
         threads.append(t)
         t.start()
 
-    print '[+] Damn semaphores, how do they work...?'
-    # Wait for all threads to
+    #   Wait for all threads to get to the critical section #
     __import__('time').sleep(5)
-
     for i in range(arg_nthreads):
         semaphore.release()
