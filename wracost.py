@@ -54,6 +54,13 @@ class WRACOST():
             elif(method == "GET"):
                 self.semaphore.acquire()
                 req_sent = requests.get(url, cookies=cookie)
+            elif(method == 'HEAD'):
+                self.semaphore.acquire()
+                req_sent = requests.head(url, cookies=cookie)
+            else:
+                self.lock.acquire()
+                exit ("[-] Method not implemented yet...")
+                self.lock.release()
             #   End of critical section     #
             self.lock.acquire()
             sys.stdout.write("[+]\tRequest sent ")
