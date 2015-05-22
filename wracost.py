@@ -7,19 +7,24 @@ from urlparse import urlparse
 import threading
 import sys
 import requests
-from WRACOST.core import arg_parser
+from core import arg_parser, cookie_parser
 
 
 class WRACOST():
 
-    def __init__(self, url, method, verbosity, params=None, payloads=None, cookie=None):
+    def __init__(self, url, method, verbosity, params=None, payloads=None, cookiefile=None):
         #   Set the command line arguments  #
         self.arg_url = url
         self.arg_method = method
         self.arg_verbosity = verbosity
         self.arg_params = params
         self.arg_payloads = payloads
-        self.arg_cookie = cookie
+
+        if (cookiefile):
+            file_data = ""
+            with open(cookiefile) as cfile:
+                file_data = "".join(line.rstrip() for line in cfile)
+            self.arg_cookie = cookie_parser.CookieParser().parseOneLineCookie(file_data)
 
         #   Useless if this class is used by any other files than this  #
         self.lock = threading.Lock()
@@ -32,34 +37,36 @@ class WRACOST():
                         data_payload[param] = payloads[n % len(payloads)]
             return data_payload
 
-    def do_request(self, method=None, url=None):
+    def do_request(self, method=None, url=None, cookie=None):
         if not (method):
             method = self.arg_method
         if not (url):
             url = self.arg_url
+        if not(cookie):
+            cookie = self.arg_cookie
         try:
             parsed_payload = self.parse_param_data(self.arg_params, self.arg_payloads)
-            req_sent = ''
-            #   POST or GET?    #
-            #   We need to do as few things as we can here  #
-            if (method == 'POST'):
+            req_sent = ""
+            #   Entering critical section   #
+            if (method == "POST"):
                 self.semaphore.acquire()
-                req_sent =requests.post(url, data=parsed_payload)
-            elif(method == 'GET'):
+                req_sent =requests.post(url, data=parsed_payload, cookies=cookie)
+            elif(method == "GET"):
                 self.semaphore.acquire()
-                req_sent = requests.get(url)
-            #   End of critical section #
-
+                req_sent = requests.get(url, cookies=cookie)
+            #   End of critical section     #
             self.lock.acquire()
             sys.stdout.write("[+]\tRequest sent ")
             if (arg_verbosity > 0):
                 print "to:", arg_url
                 print "[+]\t\tmethod:", arg_method
-                if (self.arg_method!='GET'):
+                if (self.arg_method!="GET"):
                     print "[+]\t\tpayload:", parsed_payload
                 print "[+]\tresponse headers: "
                 for header_name in req_sent.headers:
-                    print "[+]\t\t", header_name, ':', req_sent.headers[header_name]
+                    print "[+]\t\t", header_name, ":", req_sent.headers[header_name]
+                print "[+]\tCookie \n[i]\t[output info] { 'key' : 'value' }:"
+                print "[+]\t\t", self.arg_cookie
                 print
             self.lock.release()
 
@@ -78,8 +85,8 @@ class WRACOST():
         self.semaphore = semaphore
         self.do_request()
 
-if __name__ == '__main__':
-    print 'WRACOST v1.0 ( www.github.com/n30m1nd )'
+if __name__ == "__main__":
+    print "WRACOST v1.0 ( www.github.com/n30m1nd )"
 
     #   Set the command line arguments  #
     parser = arg_parser.ArgumentParser()
@@ -89,17 +96,17 @@ if __name__ == '__main__':
     arg_method = parser.args.method
     arg_param = parser.args.params
     arg_payload = parser.args.payloads
-#    arg_cookie = parser.args.cookie
+    arg_cookiefile = parser.args.cfile
     #   End of setting the arguments    #
 
     #   Init                            #
-    wracost = WRACOST(arg_url, arg_method, arg_verbosity, arg_param, arg_payload)
+    wracost = WRACOST(arg_url, arg_method, arg_verbosity, arg_param, arg_payload, arg_cookiefile)
 
-    print('[+] Starting requests...')
+    print("[+] Starting requests...")
 
     if (arg_verbosity > 0):
-            print '[+]\t\tURL: ', arg_url
-            print '[+]\t\tThreads: ', arg_nthreads
+            print "[+]\t\tURL: ", arg_url
+            print "[+]\t\tThreads: ", arg_nthreads
             print
 
     threads = []
@@ -110,7 +117,9 @@ if __name__ == '__main__':
         threads.append(t)
         t.start()
 
-    #   Wait for all threads to get to the critical section #
-    __import__('time').sleep(5)
+    if (arg_nthreads > 3):
+        #   Wait for all threads to get to the critical section #
+        __import__("time").sleep(0.2*arg_nthreads)
+
     for i in range(arg_nthreads):
         semaphore.release()
