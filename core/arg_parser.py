@@ -33,8 +33,8 @@ class WracostArgs():
     def get_params_dict(self):
         # TODO: Make this work -> --params foo bar --payloads 0:a 0:aa 0:aaa 1:b 1:bb 2:c 2:cc 2:ccc
         # TODO: First result -> { foo : 'a', bar : 'b' }
-        # TODO: Second -> foo=winky&bar=whompy
-        # TODO: Third -> foo=blinky&bar=st4:5:ompy
+        # TODO: Second -> { foo : 'aa', bar : 'bb' }
+        # TODO: Third -> { foo : 'aaa', bar : 'b' }
         paramsdict = {}
         matchdict = {}
         numparamrepeat = {}
