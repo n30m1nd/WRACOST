@@ -11,11 +11,25 @@ class WracostArgs():
         self.parser = argparse.ArgumentParser(description="Web Race Condition and Stress Tester")
         self.args = self.get_args()
 
-        if self.args.payloads and not self.args.params:
-            exit("[-] Can't use --params without --payloads argument.")
+        if (self.args.threads and (self.args.params or self.args.payloads)):
+            """
+            These args are incompatible because the threads specify how many concurrent requests are going to be made
+            And the params/payloads also specify how many requests are going to be made depending on combinations
+            """
+            print "[-] Either specify the --threads or the --params/payloads arguments. Not both."
+            exit()
+        if (bool(self.args.payloads) ^ bool(self.args.params)): #XOR
+            print "[-] Can't use --params without --payloads argument or viceversa"
+            exit()
+        elif (self.args.payloads and self.args.getreq):
+            print \
+            "[W] the params with the same name specified in both payloads and getreq arguments will" \
+            " be overriden with the values in the \"payloads\" arguments."
+        if (self.args.getreq):
+            self.args.getreq = self.parse_param_inline()
         if self.args.v >= 2:
             print "[i] For now there are only 2 verbosity levels, sorry."
-        pass
+
 
     def get_args(self):
         self.parser.add_argument("url", help="Url to test.")
@@ -24,7 +38,11 @@ class WracostArgs():
         self.parser.add_argument("-p", "--params", type=str, nargs="+", default=None,
                                  help="Params to inject values into.")
         self.parser.add_argument("-y", "--payloads", type=str, nargs="+", default=None,
-        help="""Values for the params - Rethink""")
+        help="Values for the params - Example: -p foo bar -y 0:intofoo 0:intofoo2 1:intobar. This will make 2 requests"\
+             " making combinations with the parameters until all parameters are used.")
+        self.parser.add_argument("-g", "--getreq", type=str, default=None,
+        help="Params specified like in a GET request: ?a=1&b=2&c=3. NOTE: If used with the params/payload arguments "\
+        "the params with the same name specified here will be overriden with the values in the \"payloads\" arguments.")
         self.parser.add_argument("--cfile", help="Load cookie from this file. "+
                                                  "COOKIE FILE FORMAT: this=is;a=valid;for=mat;")
         self.parser.add_argument("-v", action="count", default=0, help="Be verbose.")
@@ -35,7 +53,6 @@ class WracostArgs():
         # TODO: First result -> { foo : 'a', bar : 'b' }
         # TODO: Second -> { foo : 'aa', bar : 'bb' }
         # TODO: Third -> { foo : 'aaa', bar : 'b' }
-        paramsdict = {}
         matchdict = {}
         numparamrepeat = {}
 
@@ -59,12 +76,24 @@ class WracostArgs():
                 exit()
 
         for i in range(max(numparamrepeat.values())):
+                paramsdict = {}
+                paramsdict.update(self.args.getreq)
                 for j, key in enumerate(self.args.params):
                     paramsdict[key] = matchdict[j][i%numparamrepeat[j]]
                 yield paramsdict
 
+    def parse_param_inline(self):
+        if (self.args.getreq):
+            matches = re.findall(r'(?:\?|\&|)([^=]+)\=([^&]+)', self.args.getreq)
+            mydict = {}
+            for m in matches:
+                mydict[m[0]] = m[1]
+            return mydict
+        else:
+            return {}
 
 if __name__ == "__main__":
     argsie = WracostArgs()
     gen = argsie.get_params_dict()
-    pass
+    for g in gen:
+        print g

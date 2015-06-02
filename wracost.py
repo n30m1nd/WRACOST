@@ -17,6 +17,8 @@ class WRACOST():
         self.arg_url = url
         self.arg_method = method
         self.arg_verbosity = verbosity
+        self.arg_paramdict = {}
+        self.arg_cookie = None
 
         if (cookiefile):
             file_data = ""
@@ -24,13 +26,10 @@ class WRACOST():
                 file_data = "".join(line.rstrip() for line in cfile)
             self.arg_cookie = cookie_parser.CookieParser().parseOneLineCookie(file_data)
 
-        if restparamsdict:
-            self.arg_paramdict = restparamsdict
-
         #   Useless if this class is used by any other files than this  #
         self.lock = threading.Lock()
 
-    def do_request(self, method=None, url=None, cookie=None):
+    def do_request(self, method=None, url=None, cookie=None, paramsdict=None):
         if not (method):
             method = self.arg_method
         if not (url):
@@ -40,27 +39,15 @@ class WRACOST():
         try:
             req_sent = ""
             #   Entering critical section   #
-            if (method == "POST"):
-                self.semaphore.acquire()
-                req_sent =requests.post(url, data=self.arg_paramdict, cookies=cookie)
-            elif(method == "GET"):
-                self.semaphore.acquire()
-                req_sent = requests.get(url, cookies=cookie)
-            elif(method == 'HEAD'):
-                self.semaphore.acquire()
-                req_sent = requests.head(url, cookies=cookie)
-            else:
-                self.lock.acquire()
-                exit ("[-] Method not implemented yet...")
-                self.lock.release()
+            self.semaphore.acquire()
+            req_sent = requests.request(method, url, data=paramsdict, cookies=cookie)
             #   End of critical section     #
             self.lock.acquire()
             sys.stdout.write("[+]\tRequest sent ")
             if (arg_verbosity > 0):
                 print "to:", arg_url
                 print "[+]\t\tmethod:", arg_method
-                if (self.arg_method!="GET"):
-                    print "[+]\t\tpayload:", self.arg_paramdict
+                print "[+]\t\tpayload:", paramsdict
                 print "[+]\tresponse headers: "
                 for header_name in req_sent.headers:
                     print "[+]\t\t", header_name, ":", req_sent.headers[header_name]
@@ -82,12 +69,7 @@ class WRACOST():
     def run(self, lock, semaphore, paramdict=None):
         self.lock = lock
         self.semaphore = semaphore
-        if (paramdict):
-            if (self.arg_paramdict):
-                self.arg_paramdict.update(paramdict)
-            else:
-                self.arg_paramdict = paramdict
-        self.do_request()
+        self.do_request(paramsdict=paramdict)
 
 if __name__ == "__main__":
     #   Set the command line arguments  #
@@ -97,7 +79,7 @@ if __name__ == "__main__":
     arg_verbosity = parser.args.v
     arg_method = parser.args.method
     arg_params = parser.args.params
-    arg_payloads = parser.args.payloads
+    arg_getreq = parser.args.getreq
     arg_cookiefile = parser.args.cfile
     #   End of setting the arguments    #
 
@@ -114,23 +96,26 @@ if __name__ == "__main__":
             print
 
     threads = []
+    wait_nthreads = 0
     semaphore = threading.Semaphore(0)
     lock = threading.Lock()
-    if (arg_method != 'POST'):
+    if (arg_nthreads):
         for i in range(arg_nthreads):
-            t = threading.Thread(target=wracost.run, args=(lock, semaphore, ))
+            wait_nthreads += 1
+            t = threading.Thread(target=wracost.run, args=(lock, semaphore, arg_getreq))
             threads.append(t)
             t.start()
     else:
         for paramdict in parser.get_params_dict():
-            t = threading.Thread(target=wracost.run, args=(lock, semaphore, paramdict))
+            wait_nthreads += 1
+            t = threading.Thread(target=wracost.run, args=(lock, semaphore, paramdict.copy()))
             threads.append(t)
             t.start()
 
 
-    if (arg_nthreads > 2):
+    if (wait_nthreads > 2):
         #   Wait for all threads to get to the critical section #
-        __import__("time").sleep(0.2*arg_nthreads)
+        __import__("time").sleep(0.2*wait_nthreads)
 
-    for i in range(arg_nthreads):
+    for i in range(wait_nthreads):
         semaphore.release()
