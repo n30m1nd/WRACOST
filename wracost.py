@@ -12,13 +12,15 @@ from core import arg_parser, cookie_parser
 
 class WRACOST():
 
-    def __init__(self, url, method, verbosity=0, cookiefile=None, restparamsdict=None):
+    def __init__(self, url, method, verbosity=0, proxy=None ,cookiefile=None):
         #   Set the command line arguments  #
         self.arg_url = url
         self.arg_method = method
         self.arg_verbosity = verbosity
         self.arg_paramdict = {}
+        self.arg_proxy = proxy
         self.arg_cookie = None
+
 
         if (cookiefile):
             file_data = ""
@@ -40,7 +42,7 @@ class WRACOST():
             req_return = ""
             #   Entering critical section   #
             self.semaphore.acquire()
-            req_return = requests.request(method, url, data=paramsdict, cookies=cookie)
+            req_return = requests.request(method, url, data=paramsdict, proxies=self.arg_proxy, cookies=cookie)
             #   End of critical section     #
             self.lock.acquire()
             sys.stdout.write("[+]\tRequest sent ")
@@ -51,10 +53,14 @@ class WRACOST():
                 print "[+]\tresponse headers: "
                 for header_name in req_return.headers:
                     print "[+]\t\t", header_name, ":", req_return.headers[header_name]
+                if (self.arg_proxy):
+                    print "[+] Using proxy:", self.arg_proxy
                 print "[+]\tCookie [output info: { 'name' : 'value' }:"
                 print "[+]\t\t", self.arg_cookie
                 if (arg_verbosity > 1):
+                    print "******** SOURCE CODE FROM:", self.arg_url, "********"
                     print req_return.text
+                    print "****** END OF SOURCE CODE:", self.arg_url, "********"
                 print
             else:
                 print
@@ -86,11 +92,12 @@ if __name__ == "__main__":
     arg_method = parser.args.method
     arg_params = parser.args.params
     arg_getreq = parser.args.getreq
+    arg_proxy = parser.args.proxy
     arg_cookiefile = parser.args.cfile
     #   End of setting the arguments    #
 
     #   Init                            #
-    wracost = WRACOST(arg_url, arg_method, arg_verbosity, arg_cookiefile)
+    wracost = WRACOST(arg_url, arg_method, arg_verbosity, arg_proxy, arg_cookiefile)
 
     print
     print "[+] Starting requests..."

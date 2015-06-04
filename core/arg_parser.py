@@ -19,9 +19,6 @@ class WracostArgs():
             print "[-] Either specify the --threads or the --params/payloads arguments. Not both."
             exit()
         if (self.args.getreq):
-            if not (re.search(r'^"', self.args.getreq)):
-                print '[-] Please specify the --getreq argument within quotes. Example: "a=1&b=2&c=3".'
-                exit ()
             self.args.getreq = self.parse_param_inline()
         else:
             self.args.getreq = {}
@@ -32,6 +29,8 @@ class WracostArgs():
             print \
             "[W] the params with the same name specified in both payloads and getreq arguments will" \
             " be overriden with the values in the \"payloads\" arguments."
+        if (self.args.proxy):
+            self.args.proxy = self.parse_proxy()
         if (self.args.v >= 2):
             print "[i] Consider piping output to a file. This verbosity level gets the sourcecode of the request..."
             __import__('time').sleep(2)
@@ -62,6 +61,11 @@ class WracostArgs():
 
         self.parser.add_argument("-v", action="count", default=0,
         help="Be verbose. -v shows headers and params sent. -vv like -v plus outputs the sourcecode from the request")
+
+        self.parser.add_argument("-x", "--proxy",
+        help="Proxy to use specified by: Protocol:http://IP:PORT. Example: https:http://user:pass@192.168.0.1."
+        "See the 'requests' library docs. on proxies for further info.")
+
         return self.parser.parse_args()
 
     def get_params_dict(self):
@@ -100,16 +104,24 @@ class WracostArgs():
 
     def parse_param_inline(self):
         if (self.args.getreq):
-            matches = re.findall(r'(?:\?|\&|)([^=]+)\=([^&]+)', self.args.getreq)
             mydict = {}
+            matches = re.findall(r'(?:\?|\&|)([^=]+)\=([^&]+)', self.args.getreq)
             for m in matches:
                 mydict[m[0]] = m[1]
             return mydict
         else:
             return {}
 
+    def parse_proxy(self):
+        proxydict = {}
+        try:
+            match = re.search(r'((?:http|https)):(.*)', self.args.proxy, re.I)
+            proxydict[match.group(1)] = match.group(2)
+            return proxydict
+        except AttributeError:
+            print "[-] Wrong proxy format."
+            exit()
+
 if __name__ == "__main__":
     argsie = WracostArgs()
-    gen = argsie.get_params_dict()
-    for g in gen:
-        print g
+    print argsie.args.proxy
