@@ -37,10 +37,10 @@ class WRACOST():
         if not(cookie):
             cookie = self.arg_cookie
         try:
-            req_sent = ""
+            req_return = ""
             #   Entering critical section   #
             self.semaphore.acquire()
-            req_sent = requests.request(method, url, data=paramsdict, cookies=cookie)
+            req_return = requests.request(method, url, data=paramsdict, cookies=cookie)
             #   End of critical section     #
             self.lock.acquire()
             sys.stdout.write("[+]\tRequest sent ")
@@ -49,10 +49,14 @@ class WRACOST():
                 print "[+]\t\tmethod:", arg_method
                 print "[+]\t\tpayload:", paramsdict
                 print "[+]\tresponse headers: "
-                for header_name in req_sent.headers:
-                    print "[+]\t\t", header_name, ":", req_sent.headers[header_name]
-                print "[+]\tCookie \n[i]\t[output info] { 'key' : 'value' }:"
+                for header_name in req_return.headers:
+                    print "[+]\t\t", header_name, ":", req_return.headers[header_name]
+                print "[+]\tCookie [output info: { 'name' : 'value' }:"
                 print "[+]\t\t", self.arg_cookie
+                if (arg_verbosity > 1):
+                    print req_return.text
+                print
+            else:
                 print
             self.lock.release()
 
@@ -72,6 +76,8 @@ class WRACOST():
         self.do_request(paramsdict=paramdict)
 
 if __name__ == "__main__":
+    print "WRACOST v1.2 ( www.github.com/n30m1nd )"
+    print
     #   Set the command line arguments  #
     parser = arg_parser.WracostArgs()
     arg_url = parser.args.url
@@ -86,7 +92,6 @@ if __name__ == "__main__":
     #   Init                            #
     wracost = WRACOST(arg_url, arg_method, arg_verbosity, arg_cookiefile)
 
-    print "WRACOST v1.1 ( www.github.com/n30m1nd )"
     print
     print "[+] Starting requests..."
 
@@ -111,7 +116,6 @@ if __name__ == "__main__":
             t = threading.Thread(target=wracost.run, args=(lock, semaphore, paramdict.copy()))
             threads.append(t)
             t.start()
-
 
     if (wait_nthreads > 2):
         #   Wait for all threads to get to the critical section #

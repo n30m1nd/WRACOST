@@ -1,0 +1,6 @@
+These are use cases for WRACOST.
+
+Instructions:
+· Set up a web server (better if it is in your own [virtual] machine)
+· Copy all these files into a folder that you have access to in the server
+· Read the header of the file from test case you want to run WRACOST against
