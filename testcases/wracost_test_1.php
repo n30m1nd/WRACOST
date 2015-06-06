@@ -1,7 +1,7 @@
 <?php
 
 /********************************************************************
- * Test 1: Race condition met when writing to disk.          *
+ * Test 1: Race condition met when writing to disk.          		*
  * ---------------------------------------------------------------- *
  * This test will try to write to disk unless blockfile is present  *
  * a file called "blockage".                                        *
@@ -12,6 +12,9 @@
  ********************************************************************
  */
 $data_folder = "./data/test1_hd_write/"
+if (!is_dir($data_folder)) {
+  mkdir($data_folder);
+}
 
 if (!file_exists($data_folder."blockage")){
     file_put_contents($data_folder."RaceConditionFileN".rand(),"Testing");

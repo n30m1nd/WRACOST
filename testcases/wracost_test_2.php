@@ -10,7 +10,10 @@
  *              POST -p band -y 0:opt1 0:opt2 0:opt2 0:opt3     *
  ****************************************************************
  */
- $data_folder = "./data/test2_voting/";
+$data_folder = "./data/test2_voting/";
+if (!is_dir($data_folder)) {
+mkdir($data_folder);
+}
  
 ?>
 
