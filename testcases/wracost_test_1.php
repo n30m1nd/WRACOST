@@ -1,7 +1,7 @@
 <?php
 
 /********************************************************************
- * Test 1: Race condition met when writing to disk.          		*
+ * Test 1: Race condition met when writing to disk.          	    *
  * ---------------------------------------------------------------- *
  * This test will try to write to disk unless "blockage" is present *
  * which is a file that pretends to be the lock for a database elem.*
