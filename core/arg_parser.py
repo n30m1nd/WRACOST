@@ -14,7 +14,7 @@ class WracostArgs():
         if (self.args.threads and (self.args.params or self.args.payloads)):
             """
             These args are incompatible because the threads specify how many concurrent requests are going to be made
-            And the params/payloads also specify how many requests are going to be made depending on combinations
+            And the params/payloads also specify how many requests are going to be made depending on permutations
             """
             print "[-] Either specify the --threads or the --params/payloads arguments. Not both."
             exit()
