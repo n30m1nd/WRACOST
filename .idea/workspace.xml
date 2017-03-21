@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="109e7fa0-01f3-4ba1-8103-119d211bbc8e" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/core/arg_parser.py" afterPath="$PROJECT_DIR$/core/arg_parser.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/core/cookie_parser.py" afterPath="$PROJECT_DIR$/core/cookie_parser.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/wracost.py" afterPath="$PROJECT_DIR$/wracost.py" />
-    </list>
+    <list default="true" id="109e7fa0-01f3-4ba1-8103-119d211bbc8e" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
