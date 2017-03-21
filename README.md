@@ -9,7 +9,7 @@
 
 ### Test Cases Setup
 Instructions:
-* Set up a web server (better if it is in your own [virtual] machine)
+* Set up a web server
 * Copy the "testcases/" folder into the web server
 
 #### Test Case 1
