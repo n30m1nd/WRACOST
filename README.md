@@ -1,6 +1,6 @@
 # WRACOST
 
-### Usage [NEEDS TO BE FIXED, PARAMS/PAYLOADS OPTIONS NOT WORKING]
+### Usage
 * Please take 1 minute to read the help command: **python wracost.py --help**
 ![WRACOST Help Command](https://gitlab.sensepost.com/javier/WRACOST/raw/master/wracost_help.jpg)
 * Also check the Test Cases below
