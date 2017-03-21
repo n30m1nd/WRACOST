@@ -1,16 +1,23 @@
+#!/usr/bin/python
 #-*- coding: utf-8 -*-
 
 import argparse
 import re
+import itertools
+from time import sleep
 
 __author__ = 'n30'
 
 class WracostArgs():
 
-    def __init__(self):
+    def __init__(self): # Initial checks
         self.parser = argparse.ArgumentParser(description="Web Race Condition and Stress Tester")
         self.args = self.get_args()
 
+        if not (self.args.threads or self.args.params or self.args.payloads):
+            exit("[E] Please specify either --threads or --param/--payloads arguments")
+
+        # Prevent usage of threads with params/payloads
         if (self.args.threads and (self.args.params or self.args.payloads)):
             """
             These args are incompatible because the threads specify how many concurrent requests are going to be made
@@ -22,49 +29,62 @@ class WracostArgs():
             self.args.getreq = self.parse_param_inline()
         else:
             self.args.getreq = {}
+        # Prevent usage of params without payloads
         if (bool(self.args.payloads) ^ bool(self.args.params)): #XOR
             print "[-] Can't use --params without --payloads argument or viceversa"
             exit()
         elif (self.args.payloads and self.args.getreq):
             print \
             "[W] the params with the same name specified in both payloads and getreq arguments will" \
-            " be overriden with the values in the \"payloads\" arguments."
+            " be overwriten with the values in the \"payloads\" arguments."
+        # Proxy parsing
         if (self.args.proxy):
             self.args.proxy = self.parse_proxy()
+        # Verbosity checks
         if (self.args.v >= 2):
-            print "[i] Consider piping output to a file. This verbosity level gets the sourcecode of the request..."
-            __import__('time').sleep(2)
+            print "[i] Consider piping output to a file. This displays sourcecode of the request... [Ctrl-C] to stop."
+            sleep(2)
+
+        # Parse headers and store as dictionary
+        if (self.args.headers):
+            self.args.headers = dict([header.split(":") for header in self.args.headers])
 
     def get_args(self):
-        self.parser.add_argument("url",
-        help="Url to test.")
+        self.parser.add_argument("--cfile",
+        help="Load cookie from specified CFILE file. COOKIE FILE FORMAT: this=is;a=valid;for=mat;")
 
-        self.parser.add_argument("method",
-        help="Request method (http://www.w3.org/Protocols/HTTP/Methods.html).")
+        self.parser.add_argument("-g", "--getreq", type=str, default=None,
+        help="Params specified in a GET request format: ?a=1&b=2&c=3. NOTE: If used with the params/payload arguments "\
+        "the params that have the same name will be replaced with the values in the \"payloads\" arguments.")
 
-        self.parser.add_argument("-t", "--threads", type=int,
-        help="Number of threads/connections to run. Can't be used with --params/payloads args.")
+        self.parser.add_argument("-H", "--headers", type=str, nargs="+", default=None,
+        help="Custom headers to be added. --headers \"User-Agent:Mozilla/5.0\" \"X-Forwarded-For:127.0.0.1\"")
 
         self.parser.add_argument("-p", "--params", type=str, nargs="+", default=None,
         help="Params to inject values into. Can't be used with --threads args.")
 
         self.parser.add_argument("-y", "--payloads", type=str, nargs="+", default=None,
         help="Values for the params - Example: -p foo bar -y 0:intofoo 0:intofoo2 1:intobar. This will make 2 requests"\
-        " making combinations with the parameters until all parameters are used.")
+        " making permutations with the parameters until all payloads are used for that parameter.")
 
-        self.parser.add_argument("-g", "--getreq", type=str, default=None,
-        help="Params specified in a GET request format: ?a=1&b=2&c=3. NOTE: If used with the params/payload arguments "\
-        "the params that have the same name will be replaced with the values in the \"payloads\" arguments.")
+        self.parser.add_argument("-f", "--forceurl", action="store_true", default=False,
+        help="Force payload to be sent within the url as in a GET request")
 
-        self.parser.add_argument("--cfile",
-        help="Load cookie from this file. COOKIE FILE FORMAT: this=is;a=valid;for=mat;")
-
-        self.parser.add_argument("-v", action="count", default=0,
-        help="Be verbose. -v shows headers and params sent. -vv like -v plus outputs the sourcecode from the request")
+        self.parser.add_argument("-t", "--threads", type=int,
+        help="Number of threads/connections to run. Can't be used with --params/payloads args.")
 
         self.parser.add_argument("-x", "--proxy",
         help="Proxy to use specified by: Protocol:http://IP:PORT. Example: https:http://user:pass@192.168.0.1."
         "See the 'requests' library docs. on proxies for further info.")
+
+        self.parser.add_argument("-v", action="count", default=0,
+        help="Be verbose. -v shows headers and params sent. -vv like -v plus outputs the sourcecode from the request")
+
+        self.parser.add_argument("url",
+        help="Url to test.")
+
+        self.parser.add_argument("method",
+        help="Request method (http://www.w3.org/Protocols/HTTP/Methods.html).")
 
         return self.parser.parse_args()
 
@@ -73,6 +93,8 @@ class WracostArgs():
         # TODO: First result -> { foo : 'a', bar : 'b' }
         # TODO: Second -> { foo : 'aa', bar : 'bb' }
         # TODO: Third -> { foo : 'aaa', bar : 'b' }
+
+
         matchdict = {}
         numparamrepeat = {}
 

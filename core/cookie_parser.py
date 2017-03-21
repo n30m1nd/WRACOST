@@ -19,6 +19,6 @@ class CookieParser(cookielib.FileCookieJar):
         return cookie_dict
 
 if __name__ == "__main__":
-    #   TESTING PURPOSES    #
+    #   TESTING PURPOSES ... Unit tests maybe?   #
     cparser = CookieParser()
     print cparser.parseOneLineCookie("coo=kie;mas=ter;fuck=ERY=E=))$`+ç´`()); this=oh lor d reeeek?=!'$=?ris;")
