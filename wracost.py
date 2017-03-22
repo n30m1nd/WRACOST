@@ -4,14 +4,16 @@
 __author__ = 'n30m1nd'
 
 import httplib
-import threading
 import requests
 from core import arg_parser, cookie_parser
+import time
+from multiprocessing import Process, Lock, Semaphore, Value
+import ctypes
 
 
 class WRACOST():
 
-    def __init__(self, url, method, verbosity=0, proxy=None ,cookiefile=None, headers=None, forceurl=False):
+    def __init__(self, url, method, verbosity=0, proxy=None ,cookiefile=None, headers=None, locked=None, forceurl=False):
         #   Set the command line arguments  #
         self.arg_url = url
         self.arg_method = method
@@ -20,7 +22,9 @@ class WRACOST():
         self.arg_proxy = proxy
         self.arg_cookie = None
         self.arg_headers = requests.utils.default_headers()
+        self.arg_headers.update({"User-Agent": "WRACOST/0.9"})
         self.arg_forceurl = forceurl
+        self.locked = locked
 
         if (headers):
             self.arg_headers.update(headers)
@@ -32,21 +36,24 @@ class WRACOST():
             self.arg_cookie = cookie_parser.CookieParser().parseOneLineCookie(file_data)
 
         #   Useless if this class is used by any other files than this  #
-        self.lock = threading.Lock()
+        self.lock = Lock()
 
     def do_request(self, url, method="GET", cookie=None, paramsdict=None, headers_loc=None, forceurl=False):
         try:
             #   Entering critical section   #
-            self.semaphore.acquire()
+            # There is no observer pattern implemented on python...
+            while self.locked.value:
+                pass
+            # threadtime = time.time()
             if forceurl:
                 req_return = requests.request(method, url, params=paramsdict, proxies=self.arg_proxy, cookies=cookie, headers=headers_loc)
             else:
                 req_return = requests.request(method, url, data=paramsdict, proxies=self.arg_proxy, cookies=cookie, headers=headers_loc)
-            #   End of critical section     #
-
             self.lock.acquire()
+            #   End of critical section     #
             print ("[+]\tRequest sent to: %s") % (req_return.url)
             if (arg_verbosity > 0):
+            #   print "[+]\t\ttime: %f " % (threadtime)
                 print "[+]\t\tmethod:", method
                 print "[+]\t\tpayload:", paramsdict
                 print "[+]\t\theaders:", req_return.request.headers
@@ -74,9 +81,8 @@ class WRACOST():
             self.lock.release()
 
 
-    def run(self, lock, semaphore, paramdict=None):
+    def run(self, lock, paramdict=None):
         self.lock = lock
-        self.semaphore = semaphore
         self.do_request(self.arg_url, method=self.arg_method, cookie=self.arg_cookie, paramsdict=paramdict,
                         headers_loc=self.arg_headers, forceurl=self.arg_forceurl)
 
@@ -95,10 +101,13 @@ if __name__ == "__main__":
     arg_cookiefile = parser.args.cfile
     arg_headers = parser.args.headers
     arg_forceurl = parser.args.forceurl
+    arg_auto = parser.args.auto
     #   End of setting the arguments    #
 
     #   Init with command line args     #
-    wracost = WRACOST(arg_url, arg_method, arg_verbosity, arg_proxy, arg_cookiefile, arg_headers, arg_forceurl)
+    shared_lock_launch = Value(ctypes.c_bool)
+    shared_lock_launch.value = True
+    wracost = WRACOST(arg_url, arg_method, arg_verbosity, arg_proxy, arg_cookiefile, arg_headers, shared_lock_launch, arg_forceurl)
 
     print "[+] Starting requests..."
 
@@ -108,27 +117,23 @@ if __name__ == "__main__":
             print
 
     threads = []
-    wait_nthreads = 0
-    semaphore = threading.Semaphore(0)
-    lock = threading.Lock()
+    stdout_lock = Lock()
     if (arg_nthreads):
         for i in range(arg_nthreads):
-            wait_nthreads += 1
-            t = threading.Thread(target=wracost.run, args=(lock, semaphore, arg_getreq))
+            t = Process(target=wracost.run, args=(stdout_lock, arg_getreq))
             threads.append(t)
             t.start()
     else:
-        for paramdict in parser.get_params_dict():
-            wait_nthreads += 1
+        paramsdictionary = parser.get_params_dict()
+        for singleparam in paramsdictionary:
             # Meed a .copy() because each thread needs it's own object
-            t = threading.Thread(target=wracost.run, args=(lock, semaphore, paramdict.copy()))
+            t = Process(target=wracost.run, args=(stdout_lock, singleparam.copy()))
             threads.append(t)
             t.start()
 
-    if (wait_nthreads > 2):
-        #   Wait for all threads to get to the critical section #
-        # TODO: Find another programatic way, not just random sleeps... #
-        __import__("time").sleep(0.2*wait_nthreads)
-
-    for i in range(wait_nthreads):
-        semaphore.release()
+    if arg_auto or raw_input("[+] All threads synchronised! Launch attack?(Y/n): ") != 'n':
+        with shared_lock_launch.get_lock():
+            shared_lock_launch.value = False
+    else:
+        for thread in threads:
+            thread.terminate()

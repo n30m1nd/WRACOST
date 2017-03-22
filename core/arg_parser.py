@@ -73,9 +73,12 @@ class WracostArgs():
         self.parser.add_argument("-t", "--threads", type=int,
         help="Number of threads/connections to run. Can't be used with --params/payloads args.")
 
-        self.parser.add_argument("-x", "--proxy",
+        self.parser.add_argument("-x", "--proxy", type=str,
         help="Proxy to use specified by: Protocol:http://IP:PORT. Example: https:http://user:pass@192.168.0.1."
         "See the 'requests' library docs. on proxies for further info.")
+
+        self.parser.add_argument("--auto", action="store_true", default=False,
+        help="Launches the attack automatically without prompting the user.")
 
         self.parser.add_argument("-v", action="count", default=0,
         help="Be verbose. -v shows headers and params sent. -vv like -v plus outputs the sourcecode from the request")
