@@ -1,10 +1,16 @@
-# WRACOST
+# WRACOST - Web Race Condition and Stress Tester
 
-### Usage [NEEDS TO BE FIXED, PARAMS/PAYLOADS OPTIONS NOT WORKING]
+### Usage
 * Please take 1 minute to read the help command: **python wracost.py --help**
 ![WRACOST Help Command](https://gitlab.sensepost.com/javier/WRACOST/raw/master/wracost_help.jpg)
+
 * Also check the Test Cases below
   * *Note: These test cases use files to store data and/or block incoming requests instead of a database registry. It's left for the user to imagine that those "back-end" functionalities could be triggered by anything, not just files.*
+
+### Test Cases Setup
+Instructions:
+* Set up a web server
+* Copy the "testcases/" folder into the web server
 
 #### Test Case 1
 * Suggested command for Test Case 1:
