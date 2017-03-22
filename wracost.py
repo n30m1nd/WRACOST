@@ -72,11 +72,6 @@ class WRACOST():
             self.lock.acquire()
             print "[-] Invalid headers, check trailing spaces: ", ex.message
             self.lock.release()
-        finally:
-            try:
-                self.lock.release()
-            except:
-                pass
 
 
     def run(self, lock, semaphore, paramdict=None):

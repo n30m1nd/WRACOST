@@ -121,7 +121,10 @@ class WracostArgs():
                 paramsdict = {}
                 paramsdict.update(self.args.getreq)
                 for j, key in enumerate(self.args.params):
-                    paramsdict[key] = matchdict[j][i%numparamrepeat[j]]
+                    if j < len(matchdict):
+                        paramsdict[key] = matchdict[j][i%numparamrepeat[j]]
+                    else:
+                        print "[W] WARNING: No value(s) given for \"%s\". Add --params %d:VALUE" % (key, j)
                 yield paramsdict
 
     def parse_param_inline(self):
