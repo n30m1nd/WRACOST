@@ -50,15 +50,18 @@ class WracostArgs():
             self.args.headers = dict([header.split(":") for header in self.args.headers])
 
     def get_args(self):
-        self.parser.add_argument("--cfile",
-        help="Load cookie from specified CFILE file. COOKIE FILE FORMAT: this=is;a=valid;for=mat;")
+        self.parser.add_argument("--auto", action="store_true", default=False,
+        help="Launches the attack automatically without prompting the user.")
+
+        self.parser.add_argument("-f", "--forceurl", action="store_true", default=False,
+        help="Force payload to be sent within the url as in a GET request")
+
+        self.parser.add_argument("-t", "--threads", type=int,
+        help="Number of threads/connections to run. Can't be used with --params/payloads args.")
 
         self.parser.add_argument("-g", "--getreq", type=str, default=None,
         help="Params specified in a GET request format: ?a=1&b=2&c=3. NOTE: If used with the params/payload arguments "\
         "the params that have the same name will be replaced with the values in the \"payloads\" arguments.")
-
-        self.parser.add_argument("-H", "--headers", type=str, nargs="+", default=None,
-        help="Custom headers to be added. --headers \"User-Agent:Mozilla/5.0\" \"X-Forwarded-For:127.0.0.1\"")
 
         self.parser.add_argument("-p", "--params", type=str, nargs="+", default=None,
         help="Params to inject values into. Can't be used with --threads args.")
@@ -67,18 +70,15 @@ class WracostArgs():
         help="Values for the params - Example: -p foo bar -y 0:intofoo 0:intofoo2 1:intobar. This will make 2 requests"\
         " making permutations with the parameters until all payloads are used for that parameter.")
 
-        self.parser.add_argument("-f", "--forceurl", action="store_true", default=False,
-        help="Force payload to be sent within the url as in a GET request")
+        self.parser.add_argument("-H", "--headers", type=str, nargs="+", default=None,
+        help="Custom headers to be added. --headers \"User-Agent:Mozilla/5.0\" \"X-Forwarded-For:127.0.0.1\"")
 
-        self.parser.add_argument("-t", "--threads", type=int,
-        help="Number of threads/connections to run. Can't be used with --params/payloads args.")
+        self.parser.add_argument("--cfile",
+        help="Load cookie from specified CFILE file. COOKIE FILE FORMAT: this=is;a=valid;for=mat;")
 
         self.parser.add_argument("-x", "--proxy", type=str,
         help="Proxy to use specified by: Protocol:http://IP:PORT. Example: https:http://user:pass@192.168.0.1."
         "See the 'requests' library docs. on proxies for further info.")
-
-        self.parser.add_argument("--auto", action="store_true", default=False,
-        help="Launches the attack automatically without prompting the user.")
 
         self.parser.add_argument("-v", action="count", default=0,
         help="Be verbose. -v shows headers and params sent. -vv like -v plus outputs the sourcecode from the request")

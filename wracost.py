@@ -51,7 +51,7 @@ class WRACOST():
                 req_return = requests.request(method, url, data=paramsdict, proxies=self.arg_proxy, cookies=cookie, headers=headers_loc)
             self.lock.acquire()
             #   End of critical section     #
-            print ("[+]\tRequest sent to: %s") % (req_return.url)
+            print ("[+]\tResponse received from: %s [%d]") % (req_return.url, req_return.status_code)
             if (arg_verbosity > 0):
             #   print "[+]\t\ttime: %f " % (threadtime)
                 print "[+]\t\tmethod:", method
@@ -134,6 +134,7 @@ if __name__ == "__main__":
     if arg_auto or raw_input("[+] All threads synchronised! Launch attack?(Y/n): ") != 'n':
         with shared_lock_launch.get_lock():
             shared_lock_launch.value = False
+            print "[+] Requests launched!"
     else:
         for thread in threads:
             thread.terminate()
