@@ -2,7 +2,58 @@
 
 ### Usage
 * Please take 1 minute to read the help command: **python wracost.py --help**
-![WRACOST Help Command](https://gitlab.sensepost.com/javier/WRACOST/raw/master/wracost_help.jpg)
+
+```
+WRACOST v0.9 ( www.github.com/n30m1nd )
+
+usage: wracost.py [-h] [--auto] [-f] [-t THREADS] [-g GETREQ]
+                  [-p PARAMS [PARAMS ...]] [-y PAYLOADS [PAYLOADS ...]]
+                  [-H HEADERS [HEADERS ...]] [--cfile CFILE] [-x PROXY] [-v]
+                  url method
+
+Web Race Condition and Stress Tester
+
+positional arguments:
+  url                   Url to test.
+  method                Request method
+                        (http://www.w3.org/Protocols/HTTP/Methods.html).
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --auto                Launches the attack automatically without prompting
+                        the user.
+  -f, --forceurl        Force payload to be sent within the url as in a GET
+                        request
+  -t THREADS, --threads THREADS
+                        Number of threads/connections to run. Can't be used
+                        with --params/payloads args.
+  -g GETREQ, --getreq GETREQ
+                        Params specified in a GET request format:
+                        ?a=1&b=2&c=3. NOTE: If used with the params/payload
+                        arguments the params that have the same name will be
+                        replaced with the values in the "payloads" arguments.
+  -p PARAMS [PARAMS ...], --params PARAMS [PARAMS ...]
+                        Params to inject values into. Can't be used with
+                        --threads args.
+  -y PAYLOADS [PAYLOADS ...], --payloads PAYLOADS [PAYLOADS ...]
+                        Values for the params - Example: -p foo bar -y
+                        0:intofoo 0:intofoo2 1:intobar. This will make 2
+                        requests making permutations with the parameters until
+                        all payloads are used for that parameter.
+  -H HEADERS [HEADERS ...], --headers HEADERS [HEADERS ...]
+                        Custom headers to be added. --headers "User-
+                        Agent:Mozilla/5.0" "X-Forwarded-For:127.0.0.1"
+  --cfile CFILE         Load cookie from specified CFILE file. COOKIE FILE
+                        FORMAT: this=is;a=valid;for=mat;
+  -x PROXY, --proxy PROXY
+                        Proxy to use specified by: Protocol:http://IP:PORT.
+                        Example: https:http://user:pass@192.168.0.1.See the
+                        'requests' library docs. on proxies for further info.
+  -v                    Be verbose. -v shows headers and params sent. -vv like
+                        -v plus outputs the sourcecode from the request
+
+```
+
 
 * Also check the Test Cases below
   * *Note: These test cases use files to store data and/or block incoming requests instead of a database registry. It's left for the user to imagine that those "back-end" functionalities could be triggered by anything, not just files.*
